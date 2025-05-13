@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Edit Recipe</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Edit Recipe</h1>
+  <form id="edit-form">
+    <input type="hidden" name="id">
+    <input name="name" placeholder="Name" required><br>
+    <input name="author" placeholder="Author" required><br>
+    <input name="type" placeholder="Type" required><br>
+    <textarea name="content" placeholder="Recipe content" required></textarea><br>
+    <button type="submit">Update</button>
+  </form>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    const id = new URLSearchParams(location.search).get('id');
+    $.getJSON('api.php?action=get&id=' + id, function (data) {
+      Object.keys(data).forEach(k => $(`[name=${k}]`).val(data[k]));
+    });
+
+    $('#edit-form').on('submit', function (e) {
+      e.preventDefault();
+      $.post('api.php', $(this).serialize() + '&action=update', function (res) {
+        alert(res.message);
+        window.location = 'index.html';
+      }, 'json');
+    });
+  </script>
+</body>
+</html>

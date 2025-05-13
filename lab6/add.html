@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Add Recipe</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Add New Recipe</h1>
+  <form id="add-form">
+    <input name="name" placeholder="Name" required><br>
+    <input name="author" placeholder="Author" required><br>
+    <input name="type" placeholder="Type" required><br>
+    <textarea name="content" placeholder="Recipe content" required></textarea><br>
+    <button type="submit">Add</button>
+  </form>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    $('#add-form').on('submit', function (e) {
+      e.preventDefault();
+      $.post('api.php', $(this).serialize() + '&action=add', function (response) {
+        alert(response.message);
+        window.location = 'index.html';
+      }, 'json');
+    });
+  </script>
+</body>
+</html>

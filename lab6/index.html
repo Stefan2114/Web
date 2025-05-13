@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Browse Recipes</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+  <h1>Recipe Browser</h1>
+  <label for="filter">Filter by type:</label>
+  <input type="text" id="filter">
+  <button id="load">Load</button>
+  <p id="lastFilter"></p>
+  <ul id="recipe-list"></ul>
+
+  <button id="add-recipe-btn">Add New Recipe</button>
+
+  <script src="js/main.js"></script>
+  <script>
+    $('#add-recipe-btn').on('click', function () {
+      window.location.href = 'add.html';
+    });
+  </script>
+</body>
+</html>
