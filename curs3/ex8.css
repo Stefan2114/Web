@@ -1,0 +1,57 @@
+/* Basic Body Styling */
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    height: 100vh;
+    background: #f0f0f0;
+    margin: 0;
+}
+
+/* Header Styling */
+h1 {
+    color: #333;
+    margin-bottom: 20px;
+}
+
+/* Box Styling */
+.box {
+    width: 200px;
+    height: 100px;
+    background: #4A90E2;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-bottom: 10px;
+    transition: transform 0.3s ease; /* Smooth transition */
+}
+
+/* 🧠 1. Translate (Move) */
+.translate:hover {
+    transform: translate(50px, 20px);
+}
+
+/* 🔄 2. Rotate (Spin) */
+.rotate:hover {
+    transform: rotate(45deg);
+}
+
+/* 🔍 3. Scale (Resize) */
+.scale:hover {
+    transform: scale(1.5);
+}
+
+/* 📐 4. Skew (Slant) */
+.skew:hover {
+    transform: skew(20deg, 10deg);
+}
+
+/* 🧠 5. Combined Transformations */
+.combined:hover {
+    transform: translate(20px, 20px) rotate(-15deg) scale(1.2);
+}

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Absolute Positioning Example</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            height: 1500px; /* To allow scrolling */
+        }
+
+        h1 {
+            color: #4A90E2;
+        }
+
+        p {
+            color: #333;
+        }
+
+        .box {
+            width: 200px;
+            height: 100px;
+            background-color: #FFD700;
+            border: 1px solid #333;
+            margin-bottom: 10px;
+        }
+
+        .fixed-box {
+            position: fixed;
+            top: 20px;
+            right: 40px;
+            width: 150px;
+            height: 100px;
+            background-color: #FF6347;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            border: 2px solid #333;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .relative-box {
+            position: relative;
+            top: 20px;
+            left: 30px;
+            width: 200px;
+            height: 100px;
+            background-color: #4CAF50;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            border: 2px solid #333;
+        }
+
+        .absolute-box {
+            position: absolute;
+            top: 50px;
+            left: 50px;
+            width: 200px;
+            height: 100px;
+            background-color: #6A5ACD;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            border: 2px solid #333;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.7);
+        }
+
+        .relative-container {
+            position: relative; /* This becomes the "positioned" parent */
+            width: 500px;
+            height: 300px;
+            background-color: #f0f0f0;
+            border: 2px solid #333;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Absolute Positioning Demo</h1>
+
+    <p>Scroll down to see how the fixed box stays put, the relative box moves from its normal spot, and the absolute box positions itself within the relative container!</p>
+
+    <div class="box">Box 1 (Static)</div>
+    <div class="relative-box">I'm Relative!</div>
+
+    <div class="relative-container">
+        <div class="absolute-box">I'm Absolute!</div>
+    </div>
+
+    <div class="box">Box 2 (Static)</div>
+    <div class="box">Box 3 (Static)</div>
+
+    <div class="fixed-box">I'm Fixed!</div>
+
+    <p>More content below...</p>
+</body>
+</html>

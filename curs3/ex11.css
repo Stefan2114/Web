@@ -1,0 +1,43 @@
+/* Basic Styling */
+body {
+    font-family: 'Arial', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background: #f0f0f0;
+    margin: 0;
+}
+
+/* Flex Container */
+.container {
+    display: flex; /* Activates Flexbox */
+    flex-direction: row; /* Default is 'row' */
+    justify-content: space-between; /* Space between items */
+    align-items: center; /* Center items vertically */
+    gap: 10px; /* Spacing between items */
+    width: 60%;
+    padding: 10px;
+    border: 2px solid #333;
+    background: #ddd;
+    border-radius: 10px;
+}
+
+/* Flex Items */
+.box {
+    width: 100px;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: #fff;
+    border-radius: 5px;
+}
+
+.box1 { background: #4A90E2; }
+.box2 { background: #FFD700; flex-grow: 2;}
+.box3 { background: #FF5733; }
+
+

@@ -1,0 +1,65 @@
+/* Basic Body Styling */
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background: #f0f0f0;
+    margin: 0;
+}
+
+/* Header Styling */
+h1 {
+    color: #333;
+    margin-bottom: 20px;
+}
+
+/* Basic Radial Gradient */
+.basic-radial {
+    width: 300px;
+    height: 150px;
+    background: radial-gradient(circle, #FF5733, #33FFCE);
+    text-align: center;
+    line-height: 150px;
+    color: white;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+/* Multi-Color Radial Gradient */
+.multi-color-radial {
+    width: 300px;
+    height: 150px;
+    background: radial-gradient(circle, red, orange, yellow, green, blue, indigo, violet);
+    text-align: center;
+    line-height: 150px;
+    color: #fff;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+/* Ellipse Radial Gradient */
+.ellipse-radial {
+    width: 300px;
+    height: 150px;
+    background: radial-gradient(ellipse at center, #4A90E2, #FFD700);
+    text-align: center;
+    line-height: 150px;
+    color: #333;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+/* Repeating Radial Gradient */
+.repeating-radial {
+    width: 300px;
+    height: 150px;
+    background: repeating-radial-gradient(circle, #4A90E2 0px, #FFD700 20px);
+    text-align: center;
+    line-height: 150px;
+    color: #fff;
+    font-weight: bold;
+    margin-bottom: 20px;
+}

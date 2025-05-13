@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Relative Positioning Example</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            height: 1500px; /* To allow scrolling */
+        }
+
+        h1 {
+            color: #4A90E2;
+        }
+
+        p {
+            color: #333;
+        }
+
+        .box {
+            width: 200px;
+            height: 100px;
+            background-color: #FFD700;
+            border: 1px solid #333;
+            margin-bottom: 10px;
+        }
+
+        .fixed-box {
+            position: fixed;
+            top: 20px;
+            right: 40px;
+            width: 150px;
+            height: 100px;
+            background-color: #FF6347;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            border: 2px solid #333;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .relative-box {
+            position: relative;
+            top: 20px;
+            left: 30px;
+            width: 200px;
+            height: 100px;
+            background-color: #4CAF50;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            border: 2px solid #333;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Relative Positioning Demo</h1>
+
+    <p>Scroll down to see how the fixed box stays put, and the relative box moves slightly from its original spot!</p>
+
+    <div class="box">Box 1 (Static)</div>
+    <div class="relative-box">I'm Relative!</div>
+    <div class="box">Box 2 (Static)</div>
+    <div class="box">Box 3 (Static)</div>
+
+    <div class="fixed-box">I'm Fixed!</div>
+
+    <p>More content below...</p>
+</body>
+</html>

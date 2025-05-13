@@ -1,0 +1,46 @@
+body {
+    font-family: Arial;
+    height: 100vh;
+    background-color: white;
+    display: flex;
+}
+
+.menu-container {
+    width: 200px;
+    background-color: #333;
+    color: white;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.menu-item {
+    padding: 10px;
+    border-bottom: 1px solid #444;
+}
+
+.menu-title {
+    padding: 5px;
+    text-align: center;
+}
+
+.menu-content {
+    display: none;
+    background-color: #444;
+    padding: 10px;
+    text-align: center;
+}
+
+.menu-item:hover .menu-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.menu-content a {
+    color: white;
+    padding: 5px;
+}
+
+.menu-content a:hover {
+    color: rgba(75, 140, 225, 1);
+}

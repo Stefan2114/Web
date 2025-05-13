@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>UCLA Homepage</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 3vh 15vw 0 15vw;
+            background-color: white;
+        }
+        .logo {
+            font-size: 24px;
+            color: white;
+            font-weight: bold;
+            padding: 10px 20px;
+            background-color: rgba(39,116,174,255);
+        }
+        .top-nav {
+            display: flex;
+            align-items: center;
+        }
+        .top-nav a {
+            margin: 0 25px;
+            color: rgba(15,97,150,255);
+            font-weight: bold;
+            text-decoration: none;
+        }
+        .give-btn {
+            padding: 10px 20px;
+            background-color: rgba(15,97,150,255);
+            border-radius: 5px;
+            color: white;
+        }
+        .secondary-nav {
+            background-color: white;
+            padding: 15px 15vw;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            border-top: 1px solid #e0e0e0;
+        }
+        .secondary-nav a {
+            margin-right: 25px;
+            color: rgba(15,97,150,255);
+            text-decoration: none;
+        }
+        .banner {
+            background-color: #ffd100;
+            color: black;
+            padding: 15px;
+            text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            padding: 20px 15vw;
+            background-color: white;
+        }
+        .main-image {
+            width: 100%;
+            position: relative;
+        }
+        .main-image img {
+            width: 100%;
+            height: auto;
+        }
+        .main-image .overlay {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px;
+        }
+        .side-stories {
+            display: grid;
+            gap: 20px;
+        }
+        .story {
+            background-color: #f4f4f4;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+        }
+        .story img {
+            max-width: 200px;
+            margin-right: 15px;
+        }
+        .story-content {
+            flex-grow: 1;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">UCLA</div>
+        <nav class="top-nav">
+            <a href="#">Events</a>
+            <a href="#">Newsroom</a>
+            <a href="#">Magazine</a>
+            <a href="#">Alum</a>
+            <a href="#">Arts</a>
+            <a href="#">Careers</a>
+            <a href="#" class="give-btn">Give</a>
+        </nav>
+    </header>
+    <nav class="secondary-nav">
+        <a href="#">About ▼</a>
+        <a href="#">Admission ▼</a>
+        <a href="#">Academics ▼</a>
+        <a href="#">Research ▼</a>
+        <a href="#">Campus Life ▼</a>
+        <a href="#" style="margin-left: auto;">🔍</a>
+    </nav>
+    
+    <div class="banner">
+        TO OUR NEWLY ADMITTED BRUINS, 
+        <span>Expand ▼</span>
+    </div>
+    
+    <div class="content">
+        <div class="main-image">
+            <img src="https://www.ucla.edu/img-feed-cache/2025.03.242520P12520Gateway_moment_image_20252520252822529.jpg" alt="UCLA Bear Statue">
+            <div class="overlay">
+                <h2>Future Bruins: This is your moment! Share in the excitement.</h2>
+            </div>
+        </div>
+        <div class="side-stories">
+            <div class="story">
+                <img src="https://www.ucla.edu/img-feed-cache/2025.03.242520P22520-2520WOMEN2527S252BBASKETBALL252BBIG252BTEN.jpg" alt="Basketball Championship">
+                <div class="story-content">
+                    <h3>Bruin women beat Trojans to win Big Ten basketball championship</h3>
+                </div>
+            </div>
+            <div class="story">
+                <img src="https://www.ucla.edu/img-feed-cache/Gateway2520Managers2520-252019502520x252013002520px25202528152529.jpg" alt="Music Education">
+                <div class="story-content">
+                    <h3>The sweet sound of affordable education</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
