@@ -1,0 +1,81 @@
+/* Basic Body Styling */
+body {
+    font-family: 'Arial', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    height: 100vh;
+    background: #f0f0f0;
+    margin: 0;
+}
+
+/* Header Styling */
+h1 {
+    color: #333;
+    margin-bottom: 20px;
+}
+
+/* Box Styling */
+.box {
+    width: 200px;
+    height: 100px;
+    background: #4A90E2;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    transition: transform 0.4s ease;
+}
+
+/* 🚀 Move Animation */
+@keyframes move {
+    0% { transform: translateX(0); }
+    5% { transform: translateX(100px); }
+    95% { transform: translateX(0); }
+}
+.move {
+    animation: move 3s ease-in-out infinite;
+}
+
+/* 🔥 Bounce Animation */
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+}
+.bounce {
+    animation: bounce 1s ease infinite alternate;
+}
+
+/* 🎨 Color Change Animation */
+@keyframes colorChange {
+    0% { background: #4A90E2; }
+    50% { background: #FFD700; }
+    100% { background: #FF5733; }
+}
+.color-change {
+    animation: colorChange 3s linear infinite;
+}
+
+/* 🔄 Rotate Animation */
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+.rotate {
+    animation: rotate 2s linear infinite;
+}
+
+/* 💓 Pulse Animation */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+.pulse {
+    animation: pulse 1.5s ease-in-out infinite;
+}

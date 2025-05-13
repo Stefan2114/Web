@@ -1,0 +1,74 @@
+/* Basic Body Styling */
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    height: 100vh;
+    background: #f0f0f0;
+    margin: 0;
+}
+
+/* Header Styling */
+h1 {
+    color: #333;
+    margin-bottom: 20px;
+}
+
+/* Box Styling */
+.box {
+    width: 200px;
+    height: 100px;
+    background: #4A90E2;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    transition: transform 0.4s ease, transform-origin 0.4s ease;
+    margin-bottom: 10px;
+}
+
+/* 🎯 1. Center (Default Origin) */
+.center:hover {
+    transform: rotate(45deg);
+}
+
+/* 🎯 2. Top-Left Origin */
+.top-left {
+    transform-origin: top left;
+}
+
+.top-left:hover {
+    transform: rotate(45deg);
+}
+
+/* 🎯 3. Bottom-Right Origin */
+.bottom-right {
+    transform-origin: bottom right;
+}
+
+.bottom-right:hover {
+    transform: rotate(45deg);
+}
+
+/* 🎯 4. Custom Origin (20% X, 80% Y) */
+.custom-origin {
+    transform-origin: 20% 80%;
+}
+
+.custom-origin:hover {
+    transform: rotate(45deg);
+}
+
+/* 🎯 5. 3D Rotation with Z-axis Origin */
+.crazy-spin {
+    transform-origin: 100px 50px -50px; /* X, Y, Z */
+    perspective: 500px;
+}
+
+.crazy-spin:hover {
+    transform: rotateY(180deg);
+}
