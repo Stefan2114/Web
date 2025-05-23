@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "iSDSkOG4lqBHybo7sjHxo8cHs2n2HBxe8SOrnBroF5I=",
+  "Source": "RecipeServer",
+  "BasePath": "_content/RecipeServer",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}
