@@ -8,6 +8,9 @@
 /out/
 /publish/
 
+**/Migrations/*Snapshot.cs
+
+
 # User-specific files
 *.user
 *.suo
