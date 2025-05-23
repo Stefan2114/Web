@@ -1,0 +1,89 @@
+# ------------------------------
+# Backend (.NET / C# / ASP.NET)
+# ------------------------------
+
+# Build and publish folders
+/bin/
+/obj/
+/out/
+/publish/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# VS Code settings
+.vscode/
+*.code-workspace
+
+# ASP.NET generated files
+wwwroot/lib/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Configuration and secrets
+appsettings.*.json
+secrets.json
+
+# Logs
+*.log
+logs/
+
+# JetBrains Rider
+.idea/
+
+# Dotnet-specific
+*.dbmdl
+*.pdb
+*.cache
+*.tmp
+*.bak
+
+# Entity Framework Migrations snapshots (optional)
+**/Migrations/*.cs
+!**/Migrations/*Snapshot.cs
+
+# ------------------------------
+# Frontend (Angular)
+# ------------------------------
+
+# Angular build output
+/dist/
+/build/
+/.angular/
+/.tmp/
+tmp/
+*.tsbuildinfo
+
+# Node modules
+/node_modules/
+
+# Environment files
+src/environments/*.ts
+!.gitkeep
+
+# npm debug log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE-specific
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+*.iml
+
+# VS Code settings
+.vscode/
+
+# Angular coverage output
+/coverage/
+
+# Angular cache
+/.angular/cache/
+
