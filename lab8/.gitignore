@@ -8,6 +8,7 @@
 /out/
 /publish/
 
+**/Migrations/*.Designer.cs
 **/Migrations/*Snapshot.cs
 
 
