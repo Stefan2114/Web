@@ -1,0 +1,77 @@
+<div class="game-container">
+  <div class="game-status">
+    <h3>{{ statusMessage }}</h3>
+    <div class="error" *ngIf="error">{{ error }}</div>
+    <div class="loading" *ngIf="loading">Loading...</div>
+  </div>
+
+  <div class="game-boards" *ngIf="!loading && gameId">
+    <!-- Ship Placement Phase -->
+    <div *ngIf="isPlacingShips" class="ship-placement">
+      <h4>Place your {{ shipsPerPlayer }} ships ({{ selectedShips.length }}/{{ shipsPerPlayer }})</h4>
+      <div class="board">
+        <div class="board-header">Your Board</div>
+        <div class="grid">
+          <div 
+            *ngFor="let row of getGridArray()" 
+            class="row"
+          >
+            <div 
+              *ngFor="let col of getGridArray()" 
+              [class]="getCellClass(row, col, true)"
+              (click)="onCellClick(row, col, true)"
+            >
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Game Phase -->
+    <div *ngIf="isGameStarted" class="game-phase">
+      <div class="boards-container">
+        <!-- My Board -->
+        <div class="board">
+          <div class="board-header">Your Board</div>
+          <div class="grid">
+            <div 
+              *ngFor="let row of getGridArray()" 
+              class="row"
+            >
+              <div 
+                *ngFor="let col of getGridArray()" 
+                [class]="getCellClass(row, col, true)"
+              >
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Opponent Board -->
+        <div class="board">
+          <div class="board-header">Opponent Board</div>
+          <div class="grid">
+            <div 
+              *ngFor="let row of getGridArray()" 
+              class="row"
+            >
+              <div 
+                *ngFor="let col of getGridArray()" 
+                [class]="getCellClass(row, col, false)"
+                (click)="onCellClick(row, col, false)"
+              >
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Over -->
+  <div *ngIf="gameWon" class="game-over">
+    <h2>Game Over!</h2>
+    <p>{{ statusMessage }}</p>
+    <button (click)="joinGame()" class="new-game-btn">New Game</button>
+  </div>
+</div>
