@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
-import { FeedbackComponent } from './components/feedback/feedback.component';
+import { HomeComponent } from './components/home/home.component';
 
 export const routes: Routes = [
-  { path: '',  component: FeedbackComponent },
+  { path: '',  component: HomeComponent },
   { path: '**', redirectTo: '' }
 ];

@@ -1,19 +1,28 @@
-export interface Feedback {
+export interface Task {
   id: number;
-  message: string;
-  timestamp: string;
-  customer: Customer;
+  title: string;
+  status: string;
+  user: User;
+  lastUpdated: Date;
 }
 
-export interface AddFeedbackResponse {
-  isNaughty: boolean;
-  highlightedMessage?: string;
+export interface User {
+  id: number;
+  username: string;
 }
 
-export interface Customer{
+export interface TaskLog{
     id: number;
-    name: string;
-    email: string;
+    task: Task;
+    oldStatus: string;
+    newStatus: string;
+    timestamp: Date;
+}
+
+export interface UpdatedTask{
+      id: number;
+    newStatus: string;
+    username: string;
 }
 
 
