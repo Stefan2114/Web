@@ -1,0 +1,37 @@
+<!-- Login Section -->
+<div *ngIf="!isLoggedIn">
+  <label>Enter your name:</label>
+  <input [(ngModel)]="currentUser" />
+  <label>Enter your email:</label>
+  <input [(ngModel)]="email" />
+  <button (click)="setUser()">Proceed</button>
+</div>
+
+<!-- App Section -->
+<div *ngIf="isLoggedIn">
+  <div class="welcome">
+    <h1>Welcome, {{ currentUser }}!</h1>
+    <button (click)="logout()">Logout</button>
+  </div>
+
+  <div>
+    <h2>Feedback</h2>
+    <div *ngIf="feedbackList.length === 0">No items found.</div>
+    <div *ngFor="let item of feedbackList" class="item" [style.backgroundColor]="item.customer.name === currentUser ? 'red' : 'gray'">
+      <strong>[{{ item.id }}] CustomerName: {{ item.customer.name }} Timestamp: {{ item.timestamp }}</strong><br />
+      <small>{{ item.message }}</small>
+    </div>
+  </div>
+
+  <div>
+    <h1>Flagged feedback count: {{ flaggedCount }}</h1>
+    <h2>Add feedback</h2>
+    <div style="color: red;" *ngIf="highlightedMessage">
+    Feedback contains mean words => <span [innerHTML]="highlightedMessage"></span>
+    </div>
+    <label for="message">Enter feedback:</label>
+    <input [(ngModel)]="message" id="message" />
+    <button (click)="addFeedback()" [disabled]="naughtyCnt >= 3">Add feedback</button>
+    <button (click)="cleanFeedback()">Clean feedback</button>
+  </div>
+</div>
