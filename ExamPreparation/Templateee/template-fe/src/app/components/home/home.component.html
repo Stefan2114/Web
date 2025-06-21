@@ -1,0 +1,23 @@
+<div>
+  <h1>Documents & Movies App</h1>
+
+  <button (click)="onCreateDocument()">Create Document</button>
+  <button (click)="onLogout()">Logout</button>
+
+  <h2>Document with Most Authors</h2>
+  <div *ngIf="largestDocument">
+    <h3>{{ largestDocument.name }}</h3>
+    <p>{{ largestDocument.content }}</p>
+  </div>
+  <div *ngIf="!largestDocument">No document found</div>
+
+  <h2>Authors</h2>
+  <div *ngIf="authors.length > 0; else noAuthors">
+    <div *ngFor="let author of authors" (click)="onAuthorClick(author)">
+      {{ author.name }}
+    </div>
+  </div>
+  <ng-template #noAuthors>
+    <div>No authors found</div>
+  </ng-template>
+</div>

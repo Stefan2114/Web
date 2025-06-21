@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        input, button {
+            padding: 10px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .item {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+        }
+        .welcome {
+            background-color: #e7f3ff;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .highlight {
+            background-color: yellow;
+            font-weight: bold;
+        }
+    </style>
+    <script>
+        let currentUser = "";
+        var naughtyCnt = 0;
+        
+        const BACKEND_URL = "http://localhost:8080";
+
+        // Check for existing session on page load
+        window.onload = function() {
+            const storedUser = sessionStorage.getItem('currentUser');
+            if (storedUser) {
+                currentUser = storedUser;
+                document.getElementById("userSection").style.display = "none";
+                document.getElementById("appSection").style.display = "block";
+                document.getElementById("welcomeMessage").innerText = `Welcome, ${currentUser}!`;
+                document.getElementById("flaggedCount").innerText = "Flagged feedback count: 0";
+                fetchFeedback();
+            }
+        };
+
+        function logout() {
+            sessionStorage.removeItem('currentUser');
+            currentUser = "";
+            document.getElementById("userSection").style.display = "block";
+            document.getElementById("appSection").style.display = "none";
+            document.getElementById("username").value = "";
+            document.getElementById("challenge").value = "";
+            naughtyCnt = 0;
+        }
+
+        function setUser() {
+            const usernameInput = document.getElementById("username");
+            currentUser = usernameInput.value.trim();
+            const challenge = document.getElementById("challenge").value.trim();
+            if (!currentUser || !challenge) {
+                alert("Please enter your name and answer the challenge.");
+                return;
+            }
+
+            fetch(`${BACKEND_URL}/api/authorize`, {
+                method: "POST",
+                headers: {
+                    // request contains key-value pairs, similar to html form data submission
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: `username=${currentUser}&challenge=${challenge}`
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("Failed to authorize.");
+                    }
+                    return response.json();
+                })
+                .then(isAuthorized => {
+                    if (isAuthorized) {
+                        sessionStorage.setItem('currentUser', currentUser);
+                        document.getElementById("userSection").style.display = "none";
+                        document.getElementById("appSection").style.display = "block";
+                        document.getElementById("welcomeMessage").innerText = `Welcome, ${currentUser}!`;
+                        document.getElementById("flaggedCount").innerText = "Flagged feedback count: 0";
+
+                        fetchFeedback();
+                    }
+                    else {
+                        alert("Authorization Failed");
+                    }
+                })
+                .catch(error => {
+                    console.error(error);
+                    alert("Error logging in.");
+                });
+        }
+
+        function fetchFeedback() {
+            fetch(`${BACKEND_URL}/api/getFeedback`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("Failed to fetch.");
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const bigDiv = document.getElementById("feedback");
+                    bigDiv.innerHTML = "";
+                    if (data.length === 0) {
+                        bigDiv.innerHTML = "<p>No items found.</p>";
+                    } else {
+                        data.forEach(item => {
+                            const itemDiv = document.createElement("div");
+                            itemDiv.className = "item";
+                            itemDiv.innerHTML = `
+                                <strong>[${item.id}] CustomerId: ${item.customer.id} Timestamp: ${item.timestamp}</strong><br>
+                                <small>${item.message}</small><br>
+                            `;
+                            if (item.customer.name === currentUser) {
+                                bigDiv.style.backgroundColor = "red";
+                            }
+                            else {
+                                itemDiv.style.backgroundColor = "gray";
+                            }
+                            bigDiv.appendChild(itemDiv);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error(error);
+                    alert("Error fetching.");
+                });
+        }
+
+        function addFeedback() {
+            const message = document.getElementById("message");
+
+            fetch(`${BACKEND_URL}/api/addFeedback`, {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({customerName: currentUser, message: message.value })
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("Failed to fetch.");
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.isNaughty) {
+                        naughtyCnt++;
+                        document.getElementById("flaggedCount").innerText = "Flagged feedback count: " + naughtyCnt;
+                        document.getElementById("naughtyMessage").innerHTML = "Feedback contains mean words =>  " + data.highlightedMessage;
+
+                        if (naughtyCnt === 3) {
+                            document.getElementById("addButton").style.display = "none";
+                            document.getElementById("flaggedCount").innerText += ". You are restricted.";
+                        }
+                    }
+
+                    fetchFeedback();
+                })
+                .catch(error => {
+                    console.error(error);
+                    alert("Failed to fetch.");
+                });
+        }
+
+        function cleanFeedback() {
+            const message = document.getElementById("message");
+
+            fetch(`${BACKEND_URL}/api/cleanMessage?message=${encodeURIComponent(message.value)}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("Failed to fetch.");
+                    }
+                    return response.text(); // ← Important: Extract raw string
+                })
+                .then(cleanedMessage => {
+                    message.value = cleanedMessage;
+                    document.getElementById("naughtyMessage").innerText = ""; // Or update a success msg if you want
+                })
+                .catch(error => {
+                    console.error(error);
+                    alert("Failed to fetch.");
+                });
+        }
+    </script>
+</head>
+<body>
+    <div id="userSection" class="container">
+        <label for="username">Enter your name:</label>
+        <input type="text" id="username" required>
+        <label for="challenge">Enter your email:</label>
+        <input type="text" id="challenge" required>
+        <button onclick="setUser()">Proceed</button>
+    </div>
+
+    <div id="appSection" style="display: none;">
+        <div class="welcome">
+            <h1 id="welcomeMessage"></h1>
+            <button onclick="logout()" style="float: right;">Logout</button>
+        </div>
+
+        <div class="container">
+            <h2>Feedback</h2>
+            <div id="feedback"></div>
+        </div>
+
+        <div class="container">
+            <h1 id="flaggedCount"></h1>
+            <h2>Add feedback</h2>
+            <div id="naughtyMessage" sty></div>
+            <label for="message">Enter feedback:</label>
+            <input type="text" id="message" required>
+            <button id="addButton" onclick="addFeedback()">Add feedback</button>
+            <button onclick="cleanFeedback()">Clean feedback</button>
+        </div>
+    </div>
+</body>
+</html>

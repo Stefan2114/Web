@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Article Management</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        input, button {
+            padding: 10px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .notification {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+            display: none;
+        }
+        .article-item {
+            background-color: #f8f9fa;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+        }
+        .welcome {
+            background-color: #e7f3ff;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+    </style>
+    <script>
+        let currentUser = "";
+        let stompClient = null;
+        
+        const BACKEND_URL = "http://localhost:8080";
+
+        function connectWebSocket() {
+            // Create a new SockJS connection to the backend WebSocket endpoint
+            const socket = new SockJS(`${BACKEND_URL}/ws`);
+            // wraps the SockJS connection with STOMP
+            stompClient = Stomp.over(socket);
+            stompClient.connect({}, function (frame) {
+                console.log('Connected to WebSocket');
+                // Subscribe to the topic for article notifications
+                stompClient.subscribe('/topic/articles', function (notification) {
+                    const articleData = JSON.parse(notification.body);
+                    showNotification(articleData);
+                });
+            });
+        }
+
+        function showNotification(articleData) {
+            const notificationDiv = document.getElementById("notification");
+            notificationDiv.innerHTML = `
+                <strong>New Article Added!</strong><br>
+                <strong>User:</strong> ${articleData.user}<br>
+                <strong>Journal:</strong> ${articleData.journalName}<br>
+                <strong>Summary:</strong> ${articleData.summary}<br>
+                <strong>Date:</strong> ${new Date(articleData.date).toLocaleString()}
+            `;
+            notificationDiv.style.display = "block";
+            
+            // Hide notification after 10 seconds
+            setTimeout(() => {
+                notificationDiv.style.display = "none";
+            }, 10000);
+        }
+
+        function setUser() {
+            const usernameInput = document.getElementById("username");
+            currentUser = usernameInput.value.trim();
+            if (!currentUser) {
+                alert("Please enter your name.");
+                return;
+            }
+            document.getElementById("userSection").style.display = "none";
+            document.getElementById("appSection").style.display = "block";
+            document.getElementById("welcomeMessage").innerText = `Welcome, ${currentUser}!`;
+            
+            // Connect to WebSocket after user is set
+            connectWebSocket();
+        }
+
+        function fetchArticles() {
+            const journalNameSearch = document.getElementById("journalNameSearch").value.trim();
+            if (!journalNameSearch) {
+                alert("Please enter a journal name.");
+                return;
+            }
+
+            // AJAX request to fetch articles for the specified journal
+            fetch(`${BACKEND_URL}/articles?user=${currentUser}&journalName=${journalNameSearch}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("Failed to fetch articles.");
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const articlesDiv = document.getElementById("articles");
+                    articlesDiv.innerHTML = "";
+                    if (data.length === 0) {
+                        articlesDiv.innerHTML = "<p>No articles found for this journal.</p>";
+                    } else {
+                        data.forEach(article => {
+                            const articleDiv = document.createElement("div");
+                            articleDiv.className = "article-item";
+                            articleDiv.innerHTML = `
+                                <strong>${article.summary}</strong><br>
+                                <small>by ${article.user} on ${new Date(article.date).toLocaleString()}</small>
+                            `;
+                            articlesDiv.appendChild(articleDiv);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error(error);
+                    alert("Error fetching articles.");
+                });
+        }
+
+        function addArticle() {
+            const journalNameAdd = document.getElementById("journalNameAdd").value.trim();
+            const summary = document.getElementById("summary").value.trim();
+            if (!journalNameAdd || !summary) {
+                alert("Please enter both journal name and article summary.");
+                return;
+            }
+
+            fetch(`${BACKEND_URL}/articles`, {
+                method: "POST",
+                headers: {
+                    // request contains key-value pairs, similar to html form data submission
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: `user=${currentUser}&journalName=${journalNameAdd}&summary=${summary}`
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("Failed to add article.");
+                    }
+                    alert("Article added successfully!");
+                    // Clear the form
+                    document.getElementById("journalNameAdd").value = "";
+                    document.getElementById("summary").value = "";
+                    // Refresh the articles list if we're viewing the same journal
+                    const currentJournal = document.getElementById("journalNameSearch").value.trim();
+                    if (currentJournal === journalNameAdd) {
+                        fetchArticles();
+                    }
+                })
+                .catch(error => {
+                    console.error(error);
+                    alert("Error adding article.");
+                });
+        }
+    </script>
+</head>
+<body>
+    <div id="userSection" class="container">
+        <h1>Welcome to the Article Management System</h1>
+        <label for="username">Enter your name:</label>
+        <input type="text" id="username" required>
+        <button onclick="setUser()">Proceed</button>
+    </div>
+
+    <div id="appSection" style="display: none;">
+        <div class="welcome">
+            <h1 id="welcomeMessage"></h1>
+        </div>
+        
+        <div id="notification" class="notification"></div>
+        
+        <div class="container">
+            <h2>Search Articles</h2>
+            <label for="journalNameSearch">Journal Name:</label>
+            <input type="text" id="journalNameSearch" required>
+            <button onclick="fetchArticles()">Get Articles</button>
+            <div id="articles"></div>
+        </div>
+        
+        <div class="container">
+            <h2>Add a New Article</h2>
+            <label for="journalNameAdd">Journal Name:</label>
+            <input type="text" id="journalNameAdd" required>
+            <label for="summary">Summary:</label>
+            <input type="text" id="summary" required>
+            <button onclick="addArticle()">Add Article</button>
+        </div>
+    </div>
+</body>
+</html>

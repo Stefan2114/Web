@@ -1,0 +1,29 @@
+<div>
+  <h1>Create Document</h1>
+
+  <form (ngSubmit)="onSubmit()">
+    <label>Document Name:</label>
+    <input type="text" [(ngModel)]="document.name" name="name" />
+
+    <label>Content:</label>
+    <textarea [(ngModel)]="document.content" name="content"></textarea>
+
+    <label>Authors:</label>
+    <input 
+      type="text" 
+      [(ngModel)]="authorInput" 
+      name="authorInput"
+      placeholder="Enter author name"
+      (keyup.enter)="addAuthor()" />
+
+    <button type="button" (click)="addAuthor()">Add Author</button>
+
+    <div *ngFor="let author of document.authors; let i = index">
+      {{ author }}
+      <button type="button" (click)="removeAuthor(i)">Remove</button>
+    </div>
+
+    <button type="submit">Create</button>
+    <button type="button" (click)="onCancel()">Cancel</button>
+  </form>
+</div>

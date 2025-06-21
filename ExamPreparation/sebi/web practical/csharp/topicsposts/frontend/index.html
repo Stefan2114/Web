@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Posts app</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        input, button, textarea {
+            padding: 10px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            width: auto;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .post-item {
+            background-color: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+        }
+        .welcome {
+            background-color: #e7f3ff;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #28a745;
+            color: white;
+            padding: 15px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            display: none;
+            z-index: 1000;
+            max-width: 300px;
+        }
+        .notification.show {
+            display: block;
+            animation: slideIn 0.5s ease-out;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+        .edit-form {
+            margin-top: 10px;
+            display: none;
+        }
+        .edit-form.show {
+            display: block;
+        }
+    </style>
+    <script>
+        let currentUser = "";
+        let ws = null;
+        const BACKEND_URL = "http://localhost:8080";
+        const WS_URL = "ws://localhost:8080/api/websocket/ws";
+
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchPosts();
+        });
+
+        function setUser() {
+            const usernameInput = document.getElementById("username");
+            const username = usernameInput.value.trim();
+            
+            if (username === "") {
+                alert("Please enter a username");
+                return;
+            }
+
+            currentUser = username;
+            document.getElementById("userSection").style.display = "none";
+            document.getElementById("appSection").style.display = "block";
+            document.getElementById("welcomeMessage").textContent = `Welcome, ${currentUser}!`;
+            
+            // Connect to WebSocket
+            connectWebSocket();
+        }
+
+        function connectWebSocket() {
+            ws = new WebSocket(`${WS_URL}?username=${encodeURIComponent(currentUser)}`);
+            
+            ws.onopen = function() {
+                console.log("WebSocket connection established");
+            };
+            
+            ws.onmessage = function(event) {
+                console.log("Received WebSocket message:", event.data);
+                try {
+                    const post = JSON.parse(event.data);
+                    showNotification(post);
+                    fetchPosts(); // Refresh the posts list
+                } catch (error) {
+                    console.error("Error parsing WebSocket message:", error);
+                }
+            };
+
+            ws.onerror = function(error) {
+                console.error("WebSocket error:", error);
+            };
+
+            ws.onclose = function() {
+                console.log("WebSocket connection closed, attempting to reconnect...");
+                // Try to reconnect after 5 seconds
+                setTimeout(connectWebSocket, 5000);
+            };
+        }
+
+        function showNotification(post) {
+            if (!post || typeof post !== 'object') {
+                console.error("Invalid notification data: not an object", post);
+                return;
+            }
+
+            const notification = document.getElementById("notification");
+            const date = new Date(post.Date).toLocaleString();
+            
+            notification.innerHTML = `
+                <strong>New post by ${post.User}</strong><br>
+                Topic: ${post.TopicName}<br>
+                Content: ${post.Text}<br>
+                Time: ${date}
+            `;
+            notification.classList.add("show");
+            
+            // Hide notification after 5 seconds
+            setTimeout(() => {
+                notification.classList.remove("show");
+            }, 5000);
+        }
+
+        function fetchPosts() {
+            fetch(`${BACKEND_URL}/api/posts/`)
+                .then(response => {
+                    if (!response.ok) throw new Error("Failed to fetch posts.");
+                    return response.json();
+                })
+                .then(data => {
+                    const postsDiv = document.getElementById("posts");
+                    postsDiv.innerHTML = "";
+                    if (data.length === 0) {
+                        postsDiv.innerHTML = "<p>No posts found. Start by making one!</p>";
+                    } else {
+                        data.forEach(post => {
+                            const postDiv = document.createElement("div");
+                            postDiv.className = "post-item";
+                            postDiv.innerHTML = `
+                                <strong>[${post.id}] ${post.user} on ${post.topicName} at ${new Date(post.date).toLocaleString()}</strong>
+                                <p>${post.text}</p>
+                                <button onclick="toggleEditForm(${post.id})">Edit</button>
+                                <div id="edit-form-${post.id}" class="edit-form">
+                                    <textarea id="edit-text-${post.id}">${post.text}</textarea>
+                                    <button onclick="submitEdit(${post.id})">Save</button>
+                                    <button onclick="toggleEditForm(${post.id})">Cancel</button>
+                                </div>
+                            `;
+                            postsDiv.appendChild(postDiv);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error(error);
+                    alert("Error fetching posts.");
+                });
+        }
+
+        function toggleEditForm(postId) {
+            const editForm = document.getElementById(`edit-form-${postId}`);
+            editForm.classList.toggle("show");
+        }
+
+        function submitEdit(postId) {
+            const newText = document.getElementById(`edit-text-${postId}`).value;
+            modifyPost(postId, newText);
+            toggleEditForm(postId);
+        }
+
+        function modifyPost(postId, modifiedText) {
+            fetch(`${BACKEND_URL}/api/posts/modify`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    id: postId, 
+                    text: modifiedText,
+                    user: currentUser 
+                })
+            })
+            .then(response => {
+                if (!response.ok) throw new Error("Failed to modify post.");
+                return response.json();
+            })
+            .then(data => {
+                fetchPosts();
+            })
+            .catch(error => {
+                console.error(error);
+                alert("Error modifying post.");
+            });
+        }
+
+        function addPost() {
+            const topicName = document.getElementById("topicName").value.trim();
+            const text = document.getElementById("postText").value.trim();
+            
+            if (!topicName || !text) {
+                alert("Please fill in all fields");
+                return;
+            }
+
+            fetch(`${BACKEND_URL}/api/posts/add`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user: currentUser, topicName: topicName, text: text })
+            })
+            .then(response => {
+                if (!response.ok) throw new Error("Failed to add post.");
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById("topicName").value = "";
+                document.getElementById("postText").value = "";
+                fetchPosts();
+            })
+            .catch(error => {
+                console.error(error);
+                alert("Error adding post.");
+            });
+        }
+    </script>
+</head>
+<body>
+    <div id="userSection" class="container">
+        <h1>Welcome to the Posts App</h1>
+        <label for="username">Enter your username:</label>
+        <input type="text" id="username" required>
+        <button onclick="setUser()">Start</button>
+    </div>
+
+    <div id="appSection" style="display: none;">
+        <div class="welcome">
+            <h1 id="welcomeMessage"></h1>
+        </div>
+
+        <div id="notification" class="notification"></div>
+                
+        <div class="container">
+            <h2>Posts</h2>
+            <div id="posts"></div>
+        </div>
+        
+        <div class="container">
+            <h2>Add New Post</h2>
+            <label for="topicName">Topic Name:</label>
+            <input type="text" id="topicName" required>
+            <label for="postText">Post Content:</label>
+            <textarea id="postText" required></textarea>
+            <button onclick="addPost()">Add Post</button>
+        </div>
+    </div>
+</body>
+</html>

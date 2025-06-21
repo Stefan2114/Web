@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reservation app</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        input, button {
+            padding: 10px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .item {
+            background-color: #f8f9fa;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+        }
+        .welcome {
+            background-color: #e7f3ff;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+    </style>
+    <script>
+        let currentUser = "";
+        
+        const BACKEND_URL = "http://localhost:8080";
+
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchProducts();
+        })
+
+        function setUser() {
+            currentUser = document.getElementById("username").value.trim();
+
+            if (!currentUser) {
+                alert("Please enter your name");
+                return;
+            }
+
+            sessionStorage.setItem("products","");
+
+            document.getElementById("userSection").style.display = "none";
+            document.getElementById("appSection").style.display = "block";
+            document.getElementById("welcomeMessage").innerText = `Welcome, ${currentUser}!`;
+        }
+
+        function fetchProducts() {
+            fetch(`${BACKEND_URL}/api/products`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("Failed to fetch.");
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const productsDiv = document.getElementById("products");
+                    productsDiv.innerHTML = "";
+                    if (data.length === 0) {
+                        productsDiv.innerHTML = "<p>No products found.</p>";
+                    } else {
+                        data.forEach(product => {
+                        const productDiv = document.createElement("div");
+                        productDiv.className = "item";
+
+                        productDiv.innerHTML = `
+                            <strong>[${product.id}] ${product.name}</strong><br>
+                            <p>Price - ${product.price}</p>
+                            <button onclick="select(${product.id})">Select</button>
+                        `;
+                        productsDiv.appendChild(productDiv);
+                    });
+                    }
+                })
+                .catch(error => {
+                    console.error(error);
+                    alert("Error fetching.");
+                });
+        }
+
+        function select(productId) {
+            fetch(`${BACKEND_URL}/api/selectProduct?username=${currentUser}&productId=${productId}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Failed to select.");
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (!data.isDiversified) {
+                    alert("You are not diversifying your product choices!")
+                }
+                alert("Successfully selected!");
+
+                let storedProducts = sessionStorage.getItem("products");
+                let productArray = storedProducts ? JSON.parse(storedProducts) : [];
+
+                productArray.push(data.product);
+
+                sessionStorage.setItem("products", JSON.stringify(productArray));
+            })
+            .catch(error => {
+                console.error(error);
+                alert("Error selecting.");
+            });
+        }
+
+        function confirmOrder() {
+            const products = sessionStorage.getItem("products");
+            fetch(`${BACKEND_URL}/api/confirmOrder`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username: currentUser, productListJson: products })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Failed to confirm.");
+                }
+                return response.json();
+            })
+            .then(data => {
+                const finalPrice = data.finalPrice;
+                alert("Successfully ordered! Final price: " + finalPrice);
+
+                sessionStorage.setItem("products", "");
+            })
+            .catch(error => {
+                console.error(error);
+                alert("Error ordering.");
+            });
+        }
+    </script>
+</head>
+<body>
+    <div id="userSection" class="container">
+        <h1>Welcome to the Order app</h1>
+        <label for="username">Enter your name:</label>
+        <input type="text" id="username" required>
+        <button onclick="setUser()">Begin making orders</button>
+    </div>
+
+    <div id="appSection" style="display: none;">
+        <div class="welcome">
+            <h1 id="welcomeMessage"></h1>
+        </div>
+        
+        <div class="container">
+            <div id="products"></div>
+        </div>
+
+        <button onclick="confirmOrder()">Confirm order</button>
+    </div>
+</body>
+</html>

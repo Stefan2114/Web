@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Place Order</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        input, button {
+            padding: 10px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .order-list {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Place Order</h1>
+        
+        <form method="POST" action="http://localhost:8080/api/placeOrder">
+            <div>
+                <label for="User">Username:</label>
+                <input type="text" id="User" name="User" required>
+            </div>
+            
+            <div>
+                <label for="ProductName">Product Name:</label>
+                <input type="text" id="ProductName" name="ProductName" required>
+            </div>
+            
+            <div>
+                <label for="Quantity">Quantity:</label>
+                <input type="number" id="Quantity" name="Quantity" min="1" required>
+            </div>
+            
+            <button type="submit">Place Order</button>
+        </form>
+    </div>
+
+    <div class="container">
+        <h2>Current Orders in Session</h2>
+        <div id="orderList" class="order-list">
+            <p>No orders placed yet.</p>
+        </div>
+        
+        <div style="margin-top: 20px;">
+            <button onclick="finalizeOrders()">Finalize All Orders</button>
+            <button onclick="cancelOrders()">Cancel All Orders</button>
+        </div>
+    </div>
+
+    <script>
+        // Initialize sessionStorage if empty
+        if (!sessionStorage.getItem("orders")) {
+            sessionStorage.setItem("orders", "");
+        }
+
+        // Display current orders on page load
+        displayOrders();
+
+        function displayOrders() {
+            const orders = sessionStorage.getItem("orders");
+            const orderList = document.getElementById("orderList");
+            
+            if (!orders || orders === "") {
+                orderList.innerHTML = "<p>No orders placed yet.</p>";
+            } else {
+                const orderIds = orders.split(",").filter(id => id.trim() !== "");
+                if (orderIds.length === 0) {
+                    orderList.innerHTML = "<p>No orders placed yet.</p>";
+                } else {
+                    orderList.innerHTML = "<h3>Order IDs:</h3><ul>" + 
+                        orderIds.map(id => "<li>Order ID: " + id.trim() + "</li>").join("") + 
+                        "</ul>";
+                }
+            }
+        }
+
+        function finalizeOrders() {
+            alert("Orders have been finalized! Session cleared.");
+            sessionStorage.setItem("orders", "");
+            displayOrders();
+        }
+
+        function cancelOrders() {
+            const orders = sessionStorage.getItem("orders");
+            if (orders && orders !== "") {
+                // Create a form to submit the cancel request
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = 'http://localhost:8080/api/cancelOrders';
+                
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'orderIdsString';
+                input.value = orders;
+                
+                form.appendChild(input);
+                document.body.appendChild(form);
+                form.submit();
+                
+                // Clear session storage after submitting
+                sessionStorage.setItem("orders", "");
+                displayOrders();
+            } else {
+                alert("No orders to cancel.");
+            }
+        }
+
+        // Check if we're returning from a successful order placement
+        window.addEventListener('load', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const success = urlParams.get('success');
+            const orderId = urlParams.get('orderId');
+            const message = urlParams.get('message');
+            const cancelled = urlParams.get('cancelled');
+            const error = urlParams.get('error');
+            
+            if (success === 'true' && orderId) {
+                // Add the new order ID to sessionStorage
+                const currentOrders = sessionStorage.getItem("orders");
+                const newOrders = currentOrders ? currentOrders + "," + orderId : orderId;
+                sessionStorage.setItem("orders", newOrders);
+                
+                // Display success message
+                const successDiv = document.createElement('div');
+                successDiv.style.backgroundColor = '#d4edda';
+                successDiv.style.color = '#155724';
+                successDiv.style.padding = '10px';
+                successDiv.style.borderRadius = '4px';
+                successDiv.style.margin = '10px 0';
+                successDiv.innerHTML = `Order placed successfully! Order ID: ${orderId}`;
+                document.querySelector('.container').appendChild(successDiv);
+                
+                // Update the display
+                displayOrders();
+                
+                // Clean up URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+            } else if (success === 'false') {
+                // Display error message
+                const errorDiv = document.createElement('div');
+                errorDiv.style.backgroundColor = '#f8d7da';
+                errorDiv.style.color = '#721c24';
+                errorDiv.style.padding = '10px';
+                errorDiv.style.borderRadius = '4px';
+                errorDiv.style.margin = '10px 0';
+                errorDiv.innerHTML = `Error: ${message || 'Failed to place order'}`;
+                document.querySelector('.container').appendChild(errorDiv);
+                
+                // Clean up URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+            } else if (cancelled === 'true') {
+                // Display cancelled message
+                const cancelledDiv = document.createElement('div');
+                cancelledDiv.style.backgroundColor = '#d1ecf1';
+                cancelledDiv.style.color = '#0c5460';
+                cancelledDiv.style.padding = '10px';
+                cancelledDiv.style.borderRadius = '4px';
+                cancelledDiv.style.margin = '10px 0';
+                cancelledDiv.innerHTML = 'Orders cancelled successfully!';
+                document.querySelector('.container').appendChild(cancelledDiv);
+                
+                // Clean up URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+            } else if (error) {
+                // Display error message
+                const errorDiv = document.createElement('div');
+                errorDiv.style.backgroundColor = '#f8d7da';
+                errorDiv.style.color = '#721c24';
+                errorDiv.style.padding = '10px';
+                errorDiv.style.borderRadius = '4px';
+                errorDiv.style.margin = '10px 0';
+                errorDiv.innerHTML = `Error: ${error}`;
+                document.querySelector('.container').appendChild(errorDiv);
+                
+                // Clean up URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        });
+
+        // Add a test order ID to sessionStorage for demonstration
+        function addTestOrder() {
+            const testOrderId = Math.floor(Math.random() * 1000) + 1;
+            const currentOrders = sessionStorage.getItem("orders");
+            const newOrders = currentOrders ? currentOrders + "," + testOrderId : testOrderId.toString();
+            sessionStorage.setItem("orders", newOrders);
+            displayOrders();
+            alert("Test order ID " + testOrderId + " added to session!");
+        }
+    </script>
+
+    <!-- Add a test button to simulate adding orders -->
+    <div class="container">
+        <h3>Testing</h3>
+        <button onclick="addTestOrder()">Add Test Order ID</button>
+        <p><small>Use this to test the session storage functionality</small></p>
+    </div>
+</body>
+</html>

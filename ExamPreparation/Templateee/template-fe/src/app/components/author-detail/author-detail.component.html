@@ -1,0 +1,22 @@
+<div>
+  <button (click)="onBack()">← Back to Home</button>
+  <h2>Author Details</h2>
+
+  <h3>Documents</h3>
+  <div *ngIf="documents.length > 0; else noDocs">
+    <div *ngFor="let doc of documents">
+      <h4>{{ doc.name }}</h4>
+      <p>{{ doc.content }}</p>
+    </div>
+  </div>
+  <ng-template #noDocs><p>No documents found</p></ng-template>
+
+  <h3>Movies</h3>
+  <div *ngIf="movies.length > 0; else noMovies">
+    <div *ngFor="let movie of movies">
+      <p><strong>{{ movie.title }}</strong> — {{ movie.duration }} minutes</p>
+      <button (click)="onDeleteMovie(movie.id)">Delete</button>
+    </div>
+  </div>
+  <ng-template #noMovies><p>No movies found</p></ng-template>
+</div>

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asset App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        input, button {
+            padding: 10px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .list-item {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+        }
+        .welcome {
+            background-color: #e7f3ff;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+    </style>
+    <script>
+        let currentUser = "";
+        
+        const BACKEND_URL = "http://localhost:8080";
+
+        function setUser() {
+            const usernameInput = document.getElementById("username");
+            currentUser = usernameInput.value.trim();
+            const challenge = document.getElementById("challenge").value.trim();
+            if (!currentUser || !challenge) {
+                alert("Please enter your name and answer the challenge.");
+                return;
+            }
+
+            fetch(`${BACKEND_URL}/api/authorize`, {
+                method: "POST",
+                headers: {
+                    // request contains key-value pairs, similar to html form data submission
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: `username=${currentUser}&challenge=${challenge}`
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("Failed to authorize.");
+                    }
+                    return response.json();
+                })
+                .then(isAuthorized => {
+                    if (isAuthorized) {
+                        document.getElementById("userSection").style.display = "none";
+                        document.getElementById("appSection").style.display = "block";
+                        document.getElementById("welcomeMessage").innerText = `Welcome, ${currentUser}!`;
+
+                        fetchAssets();
+                    }
+                    else {
+                        alert("Authorization Failed");
+                    }
+                })
+                .catch(error => {
+                    console.error(error);
+                    alert("Error logging in.");
+                });
+        }
+
+        function fetchAssets() {
+            fetch(`${BACKEND_URL}/api/getAssets?username=${encodeURIComponent(currentUser)}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("Failed to fetch assets.");
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const assetsDiv = document.getElementById("assets");
+                    assetsDiv.innerHTML = "";
+                    if (data.length === 0) {
+                        assetsDiv.innerHTML = "<p>No assets found.</p>";
+                    } else {
+                        data.forEach(asset => {
+                            const assetDiv = document.createElement("div");
+                            assetDiv.className = "list-item";
+                            assetDiv.innerHTML = `
+                                <strong>[${asset.id}] UserID: ${asset.user.id} Name: ${asset.name}</strong><br>
+                                <small>${asset.description}</small><br>
+                                <small>Value: ${asset.value}</small>
+                            `;
+                            if (asset.value > 10) {
+                                assetsDiv.style.backgroundColor = "red";
+                            }
+                            else {
+                                assetDiv.style.backgroundColor = "green";
+                            }
+                            assetsDiv.appendChild(assetDiv);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error(error);
+                    alert("Error fetching assets.");
+                });
+        }
+
+        function addAssetDiv() {
+            const assetsDiv = document.getElementById("addAsset");
+            const assetDiv = document.createElement("div");
+            assetDiv.className = "list-item";
+            assetDiv.innerHTML = `
+                <input type="text" placeholder="Asset Name" class="asset-name" required>
+                <input type="text" placeholder="AssetDescription" class="asset-desc" required>
+                <input type="number" placeholder="Asset Value" class="asset-value" required>
+            `;
+            assetsDiv.appendChild(assetDiv);
+        }
+
+        function addAssets() {
+            const assetDivs = document.querySelectorAll("#addAsset .list-item");
+            const assets = [];
+            assetDivs.forEach(div => {
+                const name = div.querySelector(".asset-name").value.trim();
+                const description = div.querySelector(".asset-desc").value.trim();
+                const value = parseInt(div.querySelector(".asset-value").value, 10);
+                if (name && description && !isNaN(value)) {
+                    assets.push({ name, description, value });
+                }
+            });
+
+            fetch(`${BACKEND_URL}/api/addAssets`, {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username: currentUser, assets })
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("Failed to add assets.");
+                    }
+                    return response.json();
+                })
+                .then(successful => {
+                    if (successful) {
+                        alert("Successfully added assets.");
+                        fetchAssets();
+                    }
+                    else {
+                        alert("Something went wrong.");
+                    }
+                })
+                .catch(error => {
+                    console.error(error);
+                    alert("Error adding assets.");
+                });
+        }
+    </script>
+</head>
+<body>
+    <div id="userSection" class="container">
+        <h1>Welcome to the Asset Management System</h1>
+        <label for="username">Enter your name:</label>
+        <input type="text" id="username" required>
+        <label for="challenge">Enter the password:</label>
+        <input type="text" id="challenge" required>
+        <button onclick="setUser()">Proceed</button>
+    </div>
+
+    <div id="appSection" style="display: none;">
+        <div class="welcome">
+            <h1 id="welcomeMessage"></h1>
+        </div>
+
+        <div class="container">
+            <h2>Assets</h2>
+            <div id="assets"></div>
+        </div>
+
+        <div class="container">
+            <h2>Add assets</h2>
+            <button onclick="addAssetDiv()">+</button>
+            <div id="addAsset"></div>
+            <button onclick="addAssets()">Add assets</button>
+        </div>
+    </div>
+</body>
+</html>

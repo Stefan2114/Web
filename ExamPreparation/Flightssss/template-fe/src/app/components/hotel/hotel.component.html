@@ -1,0 +1,8 @@
+
+<div>
+  <ul>
+    <li *ngFor="let hotel of availableHotels" (click)="onClick(hotel)">
+      Room: {{hotel.name}}, availableSeats: {{hotel.availableRooms}}
+    </li>
+  </ul>
+</div>

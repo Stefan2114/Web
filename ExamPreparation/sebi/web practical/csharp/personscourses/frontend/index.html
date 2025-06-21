@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Channel app</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        input, button {
+            padding: 10px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .channel-item {
+            background-color: #f8f9fa;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+        }
+        .welcome {
+            background-color: #e7f3ff;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+    </style>
+    <script>
+        let currentUser = "";
+        
+        const BACKEND_URL = "http://localhost:8080";
+
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchCourses();
+        });
+
+        function setUser() {
+            const usernameInput = document.getElementById("username");
+            currentUser = usernameInput.value.trim();
+            if (!currentUser) {
+                alert("Please enter your name.");
+                return;
+            }
+            document.getElementById("userSection").style.display = "none";
+            document.getElementById("appSection").style.display = "block";
+            document.getElementById("welcomeMessage").innerText = `Welcome, ${currentUser}!`;
+        }
+
+        function fetchCourses() {
+            fetch(`${BACKEND_URL}/api/courses`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("Failed to fetch courses.");
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const coursesDiv = document.getElementById("courses");
+                    coursesDiv.innerHTML = "";
+                    if (data.length === 0) {
+                        coursesDiv.innerHTML = "<p>No courses found.</p>";
+                    } else {
+                        data.forEach(course => {
+                        const courseDiv = document.createElement("div");
+                        courseDiv.className = "course-item";
+
+                        let participantsAndGradesHtml = "<ul>";
+                        if (course.participantsAndGrades && course.participantsAndGrades.length > 0) {
+                            course.participantsAndGrades.forEach(participantAndGrade => {
+                                participantsAndGradesHtml += `<li>${participantAndGrade.name} - ${participantAndGrade.grade}</li>`;
+                            });
+                        } else {
+                            participantsAndGradesHtml += "<li>No participants</li>";
+                        }
+                        participantsAndGradesHtml += "</ul>";
+
+                        courseDiv.innerHTML = `
+                            <strong>[${course.id}] ${course.courseName}</strong><br>
+                            <p>${course.professorName}</p>
+                            <div><strong>Participants:</strong>${participantsAndGradesHtml}</div>
+                        `;
+                        coursesDiv.appendChild(courseDiv);
+                    });
+                    }
+                })
+                .catch(error => {
+                    console.error(error);
+                    alert("Error fetching courses.");
+                });
+        }
+
+        function fetchParticipantCourses() {
+            const participantName = document.getElementById("participantNameSearch").value;
+            fetch(`${BACKEND_URL}/api/courses/participant?participantName=${encodeURIComponent(participantName)}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("Failed to fetch courses for participant.");
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const participantCoursesDiv = document.getElementById("participantCourses");
+                    participantCoursesDiv.innerHTML = "";
+                    if (data.length === 0) {
+                        participantCoursesDiv.innerHTML = "<p>Participant is not enrolled in any course.</p>";
+                    } else {
+                        data.forEach(course => {
+                        const courseDiv = document.createElement("div");
+                        courseDiv.className = "course-item";
+
+                        let participantsAndGradesHtml = "<ul>";
+                        if (course.participantsAndGrades && course.participantsAndGrades.length > 0) {
+                            course.participantsAndGrades.forEach(participantAndGrade => {
+                                participantsAndGradesHtml += `<li>${participantAndGrade.name} - ${participantAndGrade.grade}</li>`;
+                            });
+                        } else {
+                            participantsAndGradesHtml += "<li>No participants</li>";
+                        }
+                        participantsAndGradesHtml += "</ul>";
+
+                        courseDiv.innerHTML = `
+                            <strong>[${course.id}] ${course.courseName}</strong><br>
+                            <p>${course.professorName}</p>
+                            <div><strong>Participants:</strong>${participantsAndGradesHtml}</div>
+                        `;
+                        participantCoursesDiv.appendChild(courseDiv);
+                    });
+                    }
+                })
+                .catch(error => {
+                    console.error(error);
+                    alert("Error fetching courses for participant.");
+                });
+        }
+
+        function modifyParticipantGrade() {
+            const courseName = document.getElementById("courseNameModify").value;
+            const participantName = document.getElementById("participantNameModify").value;
+            const participantGrade = document.getElementById("participantGradeModify").value;
+            fetch(`${BACKEND_URL}/api/courses/assign`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ courseName: courseName, professorName: currentUser, participantName: participantName, participantGrade: participantGrade })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Failed to assign grade to participant.");
+                }
+                return response.json();
+            })
+            .then(data => {
+                alert("Successfully assigned grade to participant!");
+                fetchCourses(); 
+            })
+            .catch(error => {
+                console.error(error);
+                alert("Error assigning grade to participant.");
+            });
+        }
+    </script>
+</head>
+<body>
+    <div id="userSection" class="container">
+        <h1>Welcome to the Course viewing app</h1>
+        <label for="username">Enter your name, professor:</label>
+        <input type="text" id="username" required>
+        <button onclick="setUser()">Proceed</button>
+    </div>
+
+    <div id="appSection" style="display: none;">
+        <div class="welcome">
+            <h1 id="welcomeMessage"></h1>
+        </div>
+                
+        <div class="container">
+            <div id="courses"></div>
+        </div>
+        
+        <div class="container">
+            <h2>View courses for a participant</h2>
+            <label for="participantNameSearch">Enter participant name:</label>
+            <input type="text" id="participantNameSearch" required>
+            <button onclick="fetchParticipantCourses()">See courses</button>
+            <div id="participantCourses"></div>
+        </div>
+
+        <div class="container">
+            <h2>Modify grade for a student</h2>
+            <label for="participantNameModify">Enter participant name:</label>
+            <input type="text" id="participantNameModify" required>
+            <label for="participantGradeModify">Enter participant's grade:</label>
+            <input type="text" id="participantGradeModify" required>
+            <label for="courseNameModify">Enter course name:</label>
+            <input type="text" id="courseNameModify" required>
+            <button onclick="modifyParticipantGrade()">See courses</button>
+        </div>
+    </div>
+</body>
+</html>

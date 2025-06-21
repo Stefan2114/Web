@@ -1,0 +1,24 @@
+<div>
+  <label>Start date: <input type="date" [(ngModel)]="searchCriteria.start"></label>
+    <label>End date: <input type="date" [(ngModel)]="searchCriteria.end"></label>
+
+  <button (click)="searchRooms()">Search</button>
+
+    <div *ngFor="let room of availableRooms">
+      <p>Room {{room.roomNumber}}</p>
+      <button (click)="reserveRoom(room)">Reserve</button>
+    </div>
+
+  <ul>
+    <li *ngFor="let reservetion of reservations">
+      Room: {{reservetion.hotelRoom}}, Form: {{reservetion.start}} to {{reservetion.end}}
+    </li>
+  </ul>
+
+  <h3>Guests</h3>
+  <label>Select date <input type="date" [(ngModel)]="guestCountDate"></label>
+  <button (click)="getGuestCount()">Get Count</button>
+  <div *ngIf="guestCount !== null">
+    <p>Total Guests: {{guestCount}}</p>
+  </div>
+</div>

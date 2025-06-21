@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Author App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        input, button {
+            padding: 10px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .list-item {
+            background-color: #f8f9fa;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+        }
+        .welcome {
+            background-color: #e7f3ff;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+    </style>
+    <script>
+        let currentUser = "";
+        
+        const BACKEND_URL = "http://localhost:8080";
+
+        function setUser() {
+            const usernameInput = document.getElementById("username");
+            currentUser = usernameInput.value.trim();
+            const challenge = document.getElementById("challenge").value.trim();
+            if (!currentUser || !challenge) {
+                alert("Please enter your name and answer the challenge.");
+                return;
+            }
+
+            fetch(`${BACKEND_URL}/api/authorize`, {
+                method: "POST",
+                headers: {
+                    // request contains key-value pairs, similar to html form data submission
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: `username=${currentUser}&challenge=${challenge}`
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("Failed to authorize.");
+                    }
+                    return response.json();
+                })
+                .then(isAuthorized => {
+                    if (isAuthorized) {
+                        document.getElementById("userSection").style.display = "none";
+                        document.getElementById("appSection").style.display = "block";
+                        document.getElementById("welcomeMessage").innerText = `Welcome, ${currentUser}!`;
+                    }
+                    else {
+                        alert("Authorization Failed");
+                    }
+                })
+                .catch(error => {
+                    console.error(error);
+                    alert("Error logging in.");
+                });
+        }
+
+        function fetchFathers() {
+            fetch(`${BACKEND_URL}/api/getFathers?username=${encodeURIComponent(currentUser)}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("Failed to fetch fathers.");
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const fathersDiv = document.getElementById("fathers");
+                    fathersDiv.innerHTML = "";
+                    if (data.length === 0) {
+                        fathersDiv.innerHTML = "<p>No fathers found.</p>";
+                    } else {
+                        data.forEach(father => {
+                            const fatherDiv = document.createElement("div");
+                            fatherDiv.className = "list-item";
+                            fatherDiv.innerHTML = `
+                                <strong>${father}</strong><br>
+                            `;
+                            fathersDiv.appendChild(fatherDiv);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error(error);
+                    alert("Error fetching fathers.");
+                });
+        }
+
+        function fetchMothers() {
+            fetch(`${BACKEND_URL}/api/getMothers?username=${encodeURIComponent(currentUser)}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("Failed to fetch mothers.");
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const mothersDiv = document.getElementById("mothers");
+                    mothersDiv.innerHTML = "";
+                    if (data.length === 0) {
+                        mothersDiv.innerHTML = "<p>No mothers found.</p>";
+                    } else {
+                        data.forEach(mother => {
+                            const motherDiv = document.createElement("div");
+                            motherDiv.className = "list-item";
+                            motherDiv.innerHTML = `
+                                <strong>${mother}</strong><br>
+                            `;
+                            mothersDiv.appendChild(motherDiv);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error(error);
+                    alert("Error fetching mothers.");
+                });
+        }
+    </script>
+</head>
+<body>
+    <div id="userSection" class="container">
+        <h1>Welcome to the Article Management System</h1>
+        <label for="username">Enter your name:</label>
+        <input type="text" id="username" required>
+        <label for="challenge">Enter the name of a parent:</label>
+        <input type="text" id="challenge" required>
+        <button onclick="setUser()">Proceed</button>
+    </div>
+
+    <div id="appSection" style="display: none;">
+        <div class="welcome">
+            <h1 id="welcomeMessage"></h1>
+        </div>
+
+        <div class="container">
+            <h2>Display father line</h2>
+            <button onclick="fetchFathers()">Get parents</button>
+            <div id="fathers"></div>
+        </div>
+
+        <div class="container">
+            <h2>Display mother line</h2>
+            <button onclick="fetchMothers()">Get parents</button>
+            <div id="mothers"></div>
+        </div>
+    </div>
+</body>
+</html>

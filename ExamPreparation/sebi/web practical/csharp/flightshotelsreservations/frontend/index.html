@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reservation app</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        input, button {
+            padding: 10px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .item {
+            background-color: #f8f9fa;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+        }
+        .welcome {
+            background-color: #e7f3ff;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+    </style>
+    <script>
+        let currentUser = "";
+        let currentDat;
+        let currentCity = "";
+        
+        const BACKEND_URL = "http://localhost:8080";
+
+        function setUser() {
+            currentUser = document.getElementById("username").value.trim();
+            currentDate = document.getElementById("date").value.trim();
+            currentCity = document.getElementById("city").value.trim();
+
+            if (!currentUser || !currentDate || !currentCity) {
+                alert("Please enter your name, date and destination city.");
+                return;
+            }
+
+            sessionStorage.setItem("reservations","");
+
+            document.getElementById("userSection").style.display = "none";
+            document.getElementById("appSection").style.display = "block";
+            document.getElementById("welcomeMessage").innerText = `Welcome, ${currentUser}!`;
+        }
+
+        function fetchFlights() {
+            fetch(`${BACKEND_URL}/api/flights?date=${currentDate}&city=${currentCity}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("Failed to fetch.");
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const flightsDiv = document.getElementById("flights");
+                    flightsDiv.innerHTML = "";
+                    if (data.length === 0) {
+                        flightsDiv.innerHTML = "<p>No flights found for your selection.</p>";
+                    } else {
+                        data.forEach(flight => {
+                        const flightDiv = document.createElement("div");
+                        flightDiv.className = "item";
+
+                        flightDiv.innerHTML = `
+                            <strong>[${flight.flightID}] Available seats - ${flight.availableSeats}</strong><br>
+                            <p>${flight.date} - ${flight.destinationCity}</p>
+                            <button onclick="reserve(${flight.flightID}, \'flight\')">Reserve</button>
+                        `;
+                        flightsDiv.appendChild(flightDiv);
+                    });
+                    }
+                })
+                .catch(error => {
+                    console.error(error);
+                    alert("Error fetching.");
+                });
+        }
+
+        function fetchHotels() {
+            fetch(`${BACKEND_URL}/api/hotels?date=${currentDate}&city=${currentCity}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("Failed to fetch.");
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const hotelsDiv = document.getElementById("hotels");
+                    hotelsDiv.innerHTML = "";
+                    if (data.length === 0) {
+                        hotelsDiv.innerHTML = "<p>No hotels found for your selection.</p>";
+                    } else {
+                        data.forEach(hotel => {
+                        const hotelDiv = document.createElement("div");
+                        hotelDiv.className = "item";
+
+                        hotelDiv.innerHTML = `
+                            <strong>[${hotel.hotelID}] ${hotel.hotelName} - ${hotel.city}</strong><br>
+                            <p>${hotel.date} - ${hotel.availableRooms}</p><br>
+                            <button onclick="reserve(${hotel.hotelID}, \'hotel\')">Reserve</button>
+                        `;
+                        hotelsDiv.appendChild(hotelDiv);
+                    });
+                    }
+                })
+                .catch(error => {
+                    console.error(error);
+                    alert("Error fetching.");
+                });
+        }
+
+        function reserve(choiceId, type) {
+            let endpoint = "";
+
+            if (type == "flight") {
+                endpoint = "reserveFlight"
+            }
+            else endpoint = "reserveHotel"
+
+            fetch(`${BACKEND_URL}/api/${endpoint}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username: currentUser, reservedResourceId: choiceId })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Failed to reserve.");
+                }
+                return response.json();
+            })
+            .then(data => {
+                alert("Successfully reserved!");
+
+                const reservations = sessionStorage.getItem("reservations");
+                let reservationId = data.reservationId;
+
+                if (reservations != "") {
+                    reservationId = "," + reservationId;
+                }
+                
+                sessionStorage.setItem("reservations", reservations + reservationId);
+            })
+            .catch(error => {
+                console.error(error);
+                alert("Error reserving.");
+            });
+        }
+
+        function cancelReservations() {
+            const reservationsIds = sessionStorage.getItem("reservations");
+            fetch(`${BACKEND_URL}/api/cancelReservations?username=${currentUser}&reservationIdsString=${reservationsIds}`, {
+            method: 'DELETE',
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Failed to cancel.");
+                }
+                return response.json();
+            })
+            .then(data => {
+                alert("Successfully cancelled!");
+
+                sessionStorage.setItem("reservations", "");
+            })
+            .catch(error => {
+                console.error(error);
+                alert("Error cancelling.");
+            });
+        }
+    </script>
+</head>
+<body>
+    <div id="userSection" class="container">
+        <h1>Welcome to the Reservation making app</h1>
+        <label for="username">Enter your name:</label>
+        <input type="text" id="username" required>
+        <label for="date">Enter date:</label>
+        <input type="date" id="date" required>
+        <label for="city">Enter your destionation city:</label>
+        <input type="text" id="city" required>
+        <button onclick="setUser()">Begin Reservation</button>
+    </div>
+
+    <div id="appSection" style="display: none;">
+        <div class="welcome">
+            <h1 id="welcomeMessage"></h1>
+        </div>
+        
+        <div class="container">
+            <h2>View flights for your date and destionation</h2>
+            <button onclick="fetchFlights()">Flights</button>
+            <div id="flights"></div>
+        </div>
+
+        <div class="container">
+            <h2>View hotels for your date and destionation</h2>
+            <button onclick="fetchHotels()">Hotels</button>
+            <div id="hotels"></div>
+        </div>
+
+        <button onclick="cancelReservations()">Cancel All Reservations</button>
+    </div>
+</body>
+</html>

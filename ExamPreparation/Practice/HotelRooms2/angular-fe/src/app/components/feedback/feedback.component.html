@@ -1,0 +1,36 @@
+<!-- Login Section -->
+<div *ngIf="!isLoggedIn">
+  <label>Enter your name:</label>
+  <input [(ngModel)]="currentUser" />
+  
+  <button (click)="setUser()">Proceed</button>
+</div>
+
+<!-- App Section -->
+<div *ngIf="isLoggedIn">
+    <h1>Welcome, {{ currentUser }}!</h1>
+    <button (click)="logout()">Logout</button>
+
+    <label>Enter your date:</label>
+    <input [(ngModel)]="currentDate" />
+    <label>Enter your city:</label>
+    <input [(ngModel)]="currentCity" />
+    <button onclick="getFlights()">Flights</button>
+    <button onclick="getHotels()">Hotels</button>
+    <div *ngFor="let hotel of hotelList">
+      <p>RoomNr {{hotel.roomNr}}</p>
+      <p>nrRooms {{hotel.nrRooms}}</p>
+      <button (click)="clickHotel(hotel)">Reserve</button>
+    </div>
+ <div *ngFor="let flight of flightList">
+      <p>Room {{flight.flightNr}}</p>
+            <p>nrSeats {{flight.nrSeats}}</p>
+
+      <button (click)="clickFlights(flight)">Reserve</button>
+    </div>
+ <div *ngFor="let reservation of reservationList">
+      <p>Type {{reservation.type}}</p>
+      <p>TypeId {{reservation.typeId}}</p>
+    </div>
+    
+</div>
