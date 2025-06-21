@@ -1,7 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet, Router } from '@angular/router';
-import { AuthService } from './services/auth.service';
+import { RouterOutlet } from '@angular/router';
 
 @Component({
   selector: 'app-root',
@@ -9,23 +8,32 @@ import { AuthService } from './services/auth.service';
   imports: [CommonModule, RouterOutlet],
   template: `
     <div class="app-container">
-      <header *ngIf="authService.isAuthenticated()">
+      <header class="app-header">
         <h1>Battleship Game</h1>
-        <div class="user-info">
-          Welcome, {{authService.getUsername()}}!
-          <button (click)="logout()" class="logout-btn">Logout</button>
-        </div>
       </header>
-      <router-outlet></router-outlet>
+      <main>
+        <router-outlet></router-outlet>
+      </main>
     </div>
   `,
-  styleUrls: ['./app.component.css']
+  styles: [`
+    .app-container {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .app-header {
+      background: rgba(0, 0, 0, 0.2);
+      padding: 1rem;
+      text-align: center;
+      color: white;
+      margin-bottom: 2rem;
+    }
+    .app-header h1 {
+      margin: 0;
+      font-size: 2rem;
+    }
+  `]
 })
 export class AppComponent {
-  constructor(public authService: AuthService, private router: Router) {}
-
-  logout() {
-    this.authService.logout();
-    this.router.navigate(['/login']);
-  }
+  title = 'battleship-frontend';
 }

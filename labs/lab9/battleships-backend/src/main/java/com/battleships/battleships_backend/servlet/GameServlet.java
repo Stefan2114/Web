@@ -1,230 +1,282 @@
 package com.battleships.battleships_backend.servlet;
 
-import com.battleships.battleships_backend.entity.Game;
-import com.battleships.battleships_backend.service.GameService;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+
+import com.battleships.battleships_backend.model.Game;
+import com.battleships.battleships_backend.repository.GameRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import org.springframework.beans.factory.annotation.Autowired;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-
-@WebServlet(name = "gameServlet", urlPatterns = "/game/*")
+@WebServlet(name = "gameServlet", urlPatterns = "/api/game/*")
 public class GameServlet extends HttpServlet {
 
     @Autowired
-    private GameService gameService;
+    private GameRepository gameRepository;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private ObjectMapper objectMapper = new ObjectMapper();
+
+    private void setCorsHeaders(HttpServletResponse resp) {
+        resp.setHeader("Access-Control-Allow-Origin", "http://localhost:4200");
+        resp.setHeader("Access-Control-Allow-Credentials", "true");
+        resp.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS, DELETE");
+        resp.setHeader("Access-Control-Allow-Headers", "Content-Type, Accept");
+    }
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+    protected void doOptions(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
-
-        // Set CORS headers and content type
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
-
-        System.out.println("I am in doPost gameServlet");
-
-        String pathInfo = request.getPathInfo();
-
-        try {
-            Long userId = getUserIdFromSession(request);
-
-            if ("/join".equals(pathInfo)) {
-                handleJoinGame(userId, response);
-            } else if (pathInfo != null && pathInfo.matches("/\\d+/ships")) {
-                Long gameId = extractGameId(pathInfo);
-                handlePlaceShips(gameId, userId, request, response);
-            } else if (pathInfo != null && pathInfo.matches("/\\d+/move")) {
-                Long gameId = extractGameId(pathInfo);
-                handleMakeMove(gameId, userId, request, response);
-            } else {
-                sendErrorResponse(response, "Invalid endpoint");
-            }
-        } catch (Exception e) {
-            sendErrorResponse(response, e.getMessage());
-        }
+        // Handle preflight requests
+        setCorsHeaders(resp);
+        resp.setStatus(HttpServletResponse.SC_OK);
     }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        // Set CORS headers and content type
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
+        setCorsHeaders(response);
+
+        String username = getAuthenticatedUser(request, response);
+        if (username == null)
+            return;
 
         String pathInfo = request.getPathInfo();
 
-        try {
-            Long userId = getUserIdFromSession(request);
-
-            if (pathInfo != null && pathInfo.matches("/\\d+")) {
-                Long gameId = Long.parseLong(pathInfo.substring(1));
-                handleGetGame(gameId, userId, response);
-            } else if (pathInfo != null && pathInfo.matches("/\\d+/status")) {
-                Long gameId = extractGameId(pathInfo);
-                handleGetGameStatus(gameId, userId, response);
-            } else if (pathInfo != null && pathInfo.matches("/\\d+/board")) {
-                Long gameId = extractGameId(pathInfo);
-                handleGetGameBoard(gameId, userId, response);
-            } else {
-                sendErrorResponse(response, "Invalid endpoint");
-            }
-        } catch (Exception e) {
-            sendErrorResponse(response, e.getMessage());
+        if ("/join".equals(pathInfo)) {
+            joinGame(username, response);
+        } else if ("/status".equals(pathInfo)) {
+            getGameStatus(username, response);
         }
     }
 
-    private void handleJoinGame(Long userId, HttpServletResponse response) throws Exception, IOException {
-        Game game = gameService.joinOrCreateGame(userId);
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
 
-        Map<String, Object> responseData = Map.of(
-                "success", true,
-                "game", gameToMap(game));
+        setCorsHeaders(response);
 
-        response.getWriter().write(objectMapper.writeValueAsString(responseData));
-    }
+        String username = getAuthenticatedUser(request, response);
+        if (username == null)
+            return;
 
-    private void handlePlaceShips(Long gameId, Long userId, HttpServletRequest request,
-            HttpServletResponse response) throws Exception, IOException {
+        String pathInfo = request.getPathInfo();
 
-        // Read JSON from request body
-        StringBuilder jsonBuffer = new StringBuilder();
-        String line;
-        while ((line = request.getReader().readLine()) != null) {
-            jsonBuffer.append(line);
+        if ("/setup".equals(pathInfo)) {
+            setupShips(username, request, response);
+        } else if ("/attack".equals(pathInfo)) {
+            makeAttack(username, request, response);
         }
-
-        // Parse ships
-        GameService.Ship[] shipsArray = objectMapper.readValue(jsonBuffer.toString(),
-                GameService.Ship[].class);
-        List<GameService.Ship> ships = List.of(shipsArray);
-
-        Game game = gameService.placeShips(gameId, userId, ships);
-
-        Map<String, Object> responseData = Map.of(
-                "success", true,
-                "game", gameToMap(game));
-
-        response.getWriter().write(objectMapper.writeValueAsString(responseData));
     }
 
-    private void handleMakeMove(Long gameId, Long userId, HttpServletRequest request,
-            HttpServletResponse response) throws Exception, IOException {
-
-        // Read JSON from request body
-        StringBuilder jsonBuffer = new StringBuilder();
-        String line;
-        while ((line = request.getReader().readLine()) != null) {
-            jsonBuffer.append(line);
-        }
-
-        // Parse move
-        Map<String, Integer> moveData = objectMapper.readValue(jsonBuffer.toString(), Map.class);
-        int row = moveData.get("row");
-        int col = moveData.get("col");
-
-        GameService.MoveResult result = gameService.makeMove(gameId, userId, row,
-                col);
-
-        Map<String, Object> responseData = Map.of(
-                "success", true,
-                "hit", result.isHit(),
-                "gameWon", result.isGameWon(),
-                "winnerId", result.getWinnerId() != null ? result.getWinnerId() : "");
-
-        response.getWriter().write(objectMapper.writeValueAsString(responseData));
-    }
-
-    private void handleGetGame(Long gameId, Long userId, HttpServletResponse response)
-            throws Exception, IOException {
-
-        Game game = gameService.getGameById(gameId, userId);
-
-        Map<String, Object> responseData = Map.of(
-                "success", true,
-                "game", gameToMap(game));
-
-        response.getWriter().write(objectMapper.writeValueAsString(responseData));
-    }
-
-    private void handleGetGameStatus(Long gameId, Long userId,
-            HttpServletResponse response)
-            throws Exception, IOException {
-
-        Game game = gameService.getGameById(gameId, userId);
-
-        Map<String, Object> responseData = Map.of(
-                "success", true,
-                "status", game.getStatus().toString(),
-                "currentPlayer", game.getCurrentPlayerId(),
-                "isYourTurn", userId.equals(game.getCurrentPlayerId()));
-
-        response.getWriter().write(objectMapper.writeValueAsString(responseData));
-    }
-
-    private void handleGetGameBoard(Long gameId, Long userId, HttpServletResponse response)
-            throws Exception, IOException {
-
-        Map<String, Object> boardData = gameService.getGameBoard(gameId, userId);
-
-        Map<String, Object> responseData = Map.of(
-                "success", true,
-                "board", boardData);
-
-        response.getWriter().write(objectMapper.writeValueAsString(responseData));
-    }
-
-    private Long getUserIdFromSession(HttpServletRequest request) throws Exception {
-        HttpSession session = request.getSession(false);
-        if (session == null) {
-            throw new Exception("No session found");
-        }
-
-        Long userId = (Long) session.getAttribute("userId");
-        if (userId == null) {
-            throw new Exception("User not authenticated");
-        }
-
-        return userId;
-    }
-
-    private Long extractGameId(String pathInfo) {
-        String[] parts = pathInfo.split("/");
-        return Long.parseLong(parts[1]);
-    }
-
-    private Map<String, Object> gameToMap(Game game) {
-
-        return Map.of(
-                "id", game.getId(),
-                "player1Id", game.getPlayer1Id(),
-                "player2Id", game.getPlayer2Id() != null ? game.getPlayer2Id() : "",
-                "currentPlayerId", game.getCurrentPlayerId() != null ? game.getCurrentPlayerId() : "",
-                "status", game.getStatus().toString(),
-                "winnerId", game.getWinnerId() != null ? game.getWinnerId() : "",
-                "createdAt", game.getCreatedAt().toString(),
-                "updatedAt", game.getUpdatedAt().toString());
-    }
-
-    private void sendErrorResponse(HttpServletResponse response, String message)
+    private String getAuthenticatedUser(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
-        response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-
-        Map<String, Object> errorResponse = Map.of(
-                "success", false,
-                "message", message != null ? message : "An unexpected error occurred");
-
-        response.getWriter().write(objectMapper.writeValueAsString(errorResponse));
+        HttpSession session = request.getSession(false);
+        if (session == null || session.getAttribute("username") == null) {
+            response.setStatus(401);
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", "Not authenticated");
+            objectMapper.writeValue(response.getWriter(), error);
+            return null;
+        }
+        return (String) session.getAttribute("username");
     }
 
+    private void joinGame(String username, HttpServletResponse response) throws IOException {
+        response.setContentType("application/json");
+
+        Map<String, Object> result = new HashMap<>();
+
+        // Check if player already has an active game
+        Game activeGame = gameRepository.findActiveGameByPlayer(username);
+        if (activeGame != null) {
+            result.put("success", true);
+            result.put("gameId", activeGame.getId());
+            result.put("message", "Rejoined existing game");
+            objectMapper.writeValue(response.getWriter(), result);
+            return;
+        }
+
+        // Look for waiting game
+        Game waitingGame = gameRepository.findWaitingGame();
+
+        if (waitingGame == null) {
+            // Create new game
+            Game newGame = new Game();
+            newGame.setPlayer1Username(username);
+            newGame.setGameStatus("WAITING");
+            newGame.setCurrentPlayer(username);
+            gameRepository.save(newGame);
+
+            result.put("success", true);
+            result.put("gameId", newGame.getId());
+            result.put("message", "Waiting for opponent");
+        } else {
+            // Join existing game
+            if (waitingGame.getPlayer1Username().equals(username)) {
+                result.put("success", false);
+                result.put("message", "Cannot join your own game");
+            } else {
+                waitingGame.setPlayer2Username(username);
+                waitingGame.setGameStatus("ACTIVE");
+                gameRepository.save(waitingGame);
+
+                result.put("success", true);
+                result.put("gameId", waitingGame.getId());
+                result.put("message", "Game started");
+            }
+        }
+
+        objectMapper.writeValue(response.getWriter(), result);
+    }
+
+    private void getGameStatus(String username, HttpServletResponse response) throws IOException {
+        response.setContentType("application/json");
+
+        Game game = gameRepository.findActiveGameByPlayer(username);
+        Map<String, Object> result = new HashMap<>();
+
+        if (game == null) {
+            result.put("success", false);
+            result.put("message", "No active game");
+        } else {
+            result.put("success", true);
+            result.put("gameId", game.getId());
+            result.put("player1", game.getPlayer1Username());
+            result.put("player2", game.getPlayer2Username());
+            result.put("currentPlayer", game.getCurrentPlayer());
+            result.put("gameStatus", game.getGameStatus());
+            result.put("winner", game.getWinner());
+
+            // Return appropriate grid data
+            if (username.equals(game.getPlayer1Username())) {
+                result.put("myGrid", game.getPlayer1Grid());
+                result.put("myAttacks", game.getPlayer1Attacks());
+            } else {
+                result.put("myGrid", game.getPlayer2Grid());
+                result.put("myAttacks", game.getPlayer2Attacks());
+            }
+        }
+
+        objectMapper.writeValue(response.getWriter(), result);
+    }
+
+    private void setupShips(String username, HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+        response.setContentType("application/json");
+
+        Map<String, String> setupData = objectMapper.readValue(request.getReader(), Map.class);
+        String gridData = setupData.get("grid");
+
+        Game game = gameRepository.findActiveGameByPlayer(username);
+        Map<String, Object> result = new HashMap<>();
+
+        if (game == null) {
+            result.put("success", false);
+            result.put("message", "No active game");
+        } else {
+            if (username.equals(game.getPlayer1Username())) {
+                game.setPlayer1Grid(gridData);
+            } else {
+                game.setPlayer2Grid(gridData);
+            }
+            gameRepository.save(game);
+
+            result.put("success", true);
+            result.put("message", "Ships positioned");
+        }
+
+        objectMapper.writeValue(response.getWriter(), result);
+    }
+
+    private void makeAttack(String username, HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+        response.setContentType("application/json");
+
+        Map<String, Object> attackData = objectMapper.readValue(request.getReader(), Map.class);
+        int row = (Integer) attackData.get("row");
+        int col = (Integer) attackData.get("col");
+
+        Game game = gameRepository.findActiveGameByPlayer(username);
+        Map<String, Object> result = new HashMap<>();
+
+        if (game == null || !username.equals(game.getCurrentPlayer())) {
+            result.put("success", false);
+            result.put("message", "Not your turn");
+        } else {
+            // Process attack logic here
+            boolean isPlayer1 = username.equals(game.getPlayer1Username());
+            String targetGrid = isPlayer1 ? game.getPlayer2Grid() : game.getPlayer1Grid();
+            String myAttacks = isPlayer1 ? game.getPlayer1Attacks() : game.getPlayer2Attacks();
+
+            // Simple hit detection (assuming grid is comma-separated values)
+            boolean hit = checkHit(targetGrid, row, col);
+            String updatedAttacks = updateAttacks(myAttacks, row, col, hit);
+
+            if (isPlayer1) {
+                game.setPlayer1Attacks(updatedAttacks);
+                game.setCurrentPlayer(game.getPlayer2Username());
+            } else {
+                game.setPlayer2Attacks(updatedAttacks);
+                game.setCurrentPlayer(game.getPlayer1Username());
+            }
+
+            // Check for winner
+            if (checkWinner(updatedAttacks)) {
+                game.setWinner(username);
+                game.setGameStatus("FINISHED");
+            }
+
+            gameRepository.save(game);
+
+            result.put("success", true);
+            result.put("hit", hit);
+            result.put("gameOver", game.getGameStatus().equals("FINISHED"));
+            result.put("winner", game.getWinner());
+        }
+
+        objectMapper.writeValue(response.getWriter(), result);
+    }
+
+    private boolean checkHit(String grid, int row, int col) {
+        if (grid == null)
+            return false;
+        String[] cells = grid.split(",");
+        int index = row * 5 + col; // Assuming 5x5 grid
+        return index < cells.length && "1".equals(cells[index]);
+    }
+
+    private String updateAttacks(String attacks, int row, int col, boolean hit) {
+        if (attacks == null) {
+            attacks = "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0";
+        }
+        String[] cells = attacks.split(",");
+        int index = row * 5 + col;
+        if (index < cells.length) {
+            cells[index] = hit ? "2" : "1"; // 1=miss, 2=hit
+        }
+        return String.join(",", cells);
+    }
+
+    private boolean checkWinner(String attacks) {
+        if (attacks == null)
+            return false;
+        String[] cells = attacks.split(",");
+        int hits = 0;
+        for (String cell : cells) {
+            if ("2".equals(cell))
+                hits++;
+        }
+        return hits >= 2; // Win when both ships are hit
+    }
 }

@@ -2,71 +2,50 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-interface Ship {
-  row: number;
-  col: number;
+export interface GameStatus {
+  success: boolean;
+  gameId?: number;
+  player1?: string;
+  player2?: string;
+  currentPlayer?: string;
+  gameStatus?: string;
+  winner?: string;
+  myGrid?: string;
+  myAttacks?: string;
+  message?: string;
 }
 
-interface Move {
-  row: number;
-  col: number;
-  hit: boolean;
-}
-
-interface Game {
-  id: number;
-  player1Id: number;
-  player2Id: number;
-  currentPlayerId: number;
-  status: string;
-  winnerId: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface MoveResult {
+export interface AttackResult {
   success: boolean;
   hit: boolean;
-  gameWon: boolean;
-  winnerId: number;
-}
-
-interface GameBoard {
-  success: boolean;
-  board: {
-    playerShips: Ship[];
-    playerMoves: Move[];
-    opponentAttacks: Move[];
-    gridSize: number;
-    shipsPerPlayer: number;
-  };
+  gameOver: boolean;
+  winner?: string;
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class GameService {
-  private baseUrl = 'http://localhost:8080/game';
+  private apiUrl = 'http://localhost:8080/api/game';
 
   constructor(private http: HttpClient) {}
 
-  joinOrCreateGame(): Observable<{success: boolean, game: Game}> {
-    return this.http.post<{success: boolean, game: Game}>(`${this.baseUrl}/join`, {}, { withCredentials: true });
+  joinGame(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/join`, { withCredentials: true });
   }
 
-  placeShips(gameId: number, ships: Ship[]): Observable<{success: boolean, game: Game}> {
-    return this.http.post<{success: boolean, game: Game}>(`${this.baseUrl}/${gameId}/ships`, ships, { withCredentials: true });
+  getGameStatus(): Observable<GameStatus> {
+    return this.http.get<GameStatus>(`${this.apiUrl}/status`, { withCredentials: true });
   }
 
-  makeMove(gameId: number, row: number, col: number): Observable<MoveResult> {
-    return this.http.post<MoveResult>(`${this.baseUrl}/${gameId}/move`, { row, col }, { withCredentials: true });
+  setupShips(grid: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/setup`, { grid }, { withCredentials: true });
   }
 
-  getGameStatus(gameId: number): Observable<{success: boolean, status: string, currentPlayer: number, isYourTurn: boolean}> {
-    return this.http.get<{success: boolean, status: string, currentPlayer: number, isYourTurn: boolean}>(`${this.baseUrl}/${gameId}/status`, { withCredentials: true });
-  }
-
-  getGameBoard(gameId: number): Observable<GameBoard> {
-    return this.http.get<GameBoard>(`${this.baseUrl}/${gameId}/board`, { withCredentials: true });
+  makeAttack(row: number, col: number): Observable<AttackResult> {
+    return this.http.post<AttackResult>(`${this.apiUrl}/attack`, 
+      { row, col }, 
+      { withCredentials: true }
+    );
   }
 }

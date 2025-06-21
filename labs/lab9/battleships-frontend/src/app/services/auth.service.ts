@@ -1,73 +1,64 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { map } from 'rxjs/operators';
 
-interface User {
-  id: number;
+export interface User {
   username: string;
 }
 
-interface AuthResponse {
+export interface LoginResponse {
   success: boolean;
+  username?: string;
   message: string;
-  user?: User;
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  private baseUrl = 'http://localhost:8080';
+  private apiUrl = 'http://localhost:8080/api';
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
 
   constructor(private http: HttpClient) {
-    // Check if user is already logged in
-    const storedUser = localStorage.getItem('currentUser');
-    if (storedUser) {
-      this.currentUserSubject.next(JSON.parse(storedUser));
+    const savedUser = localStorage.getItem('currentUser');
+    if (savedUser) {
+      this.currentUserSubject.next(JSON.parse(savedUser));
     }
   }
 
-  login(username: string, password: string): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.baseUrl}/login`, { username, password }, { withCredentials: true })
+  login(username: string, password: string): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(`${this.apiUrl}/login`, 
+      { username, password }, 
+      { withCredentials: true }
+    ).pipe(
+      map(response => {
+        if (response.success && response.username) {
+          const user: User = { username: response.username };
+          localStorage.setItem('currentUser', JSON.stringify(user));
+          this.currentUserSubject.next(user);
+        }
+        return response;
+      })
+    );
+  }
+
+  logout(): Observable<any> {
+    return this.http.post(`${this.apiUrl}/logout`, {}, { withCredentials: true })
       .pipe(
-        tap(response => {
-          if (response.success && response.user) {
-            localStorage.setItem('currentUser', JSON.stringify(response.user));
-            this.currentUserSubject.next(response.user);
-          }
+        map(() => {
+          localStorage.removeItem('currentUser');
+          this.currentUserSubject.next(null);
         })
       );
   }
 
-  register(username: string, password: string): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.baseUrl}/register`, { username, password }, { withCredentials: true })
-      .pipe(
-        tap(response => {
-          if (response.success && response.user) {
-            localStorage.setItem('currentUser', JSON.stringify(response.user));
-            this.currentUserSubject.next(response.user);
-          }
-        })
-      );
-  }
-
-  logout() {
-    localStorage.removeItem('currentUser');
-    this.currentUserSubject.next(null);
+  get currentUserValue(): User | null {
+    return this.currentUserSubject.value;
   }
 
   isAuthenticated(): boolean {
-    return this.currentUserSubject.value !== null;
-  }
-
-  getUsername(): string {
-    return this.currentUserSubject.value?.username || '';
-  }
-
-  getUserId(): number | null {
-    return this.currentUserSubject.value?.id || null;
+    return !!this.currentUserValue;
   }
 }
