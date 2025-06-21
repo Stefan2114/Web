@@ -1,1 +1,1 @@
-# Web
+# Web and other related projects
